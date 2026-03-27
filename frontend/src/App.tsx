@@ -1,121 +1,53 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useChat } from './hooks/useChat'
+import { ChatWindow } from './components/ChatWindow'
+import { ProductCard } from './components/ProductCard'
+import { ComparisonTable } from './components/ComparisonTable'
 
-function App() {
-  const [count, setCount] = useState(0)
+export default function App() {
+  const { messages, recommendations, isLoading, sendMessage } = useChat()
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
+    <div style={{
+      display: 'flex', height: '100vh',
+      background: '#020617', color: '#f1f5f9',
+      fontFamily: 'system-ui, sans-serif',
+    }}>
+      {/* Left: chat */}
+      <div style={{ flex: '0 0 50%', display: 'flex', flexDirection: 'column', borderRight: '1px solid #1e293b' }}>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid #1e293b', fontWeight: 700, fontSize: 18 }}>
+          ShopBot
         </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+        <ChatWindow messages={messages} isLoading={isLoading} onSend={sendMessage} />
+      </div>
 
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+      {/* Right: products */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: 20 }}>
+        {recommendations ? (
+          <>
+            <div style={{ fontWeight: 600, fontSize: 16, marginBottom: 16, color: '#94a3b8' }}>
+              {recommendations.fallback ? 'Products found (pipeline unavailable)' : `Top ${recommendations.products.length} Picks`}
+            </div>
+            {recommendations.products.map((p, i) => (
+              <ProductCard key={p.product_id} product={p} rank={i + 1} />
+            ))}
+            {recommendations.comparison.length > 0 && (
+              <>
+                <div style={{ fontWeight: 600, fontSize: 14, marginTop: 20, marginBottom: 8, color: '#64748b' }}>
+                  COMPARISON
+                </div>
+                <ComparisonTable products={recommendations.products} rows={recommendations.comparison} />
+              </>
+            )}
+          </>
+        ) : (
+          <div style={{
+            height: '100%', display: 'flex', alignItems: 'center',
+            justifyContent: 'center', color: '#334155', fontSize: 14, textAlign: 'center',
+          }}>
+            Product recommendations will<br />appear here after your conversation.
+          </div>
+        )}
+      </div>
+    </div>
   )
 }
-
-export default App
