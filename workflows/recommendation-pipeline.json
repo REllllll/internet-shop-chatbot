@@ -1,0 +1,111 @@
+{
+  "name": "Recommendation Pipeline",
+  "nodes": [
+    {
+      "id": "node-webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "name": "Webhook",
+      "position": [250, 300],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "recommend",
+        "responseMode": "responseNode"
+      },
+      "webhookId": "recommend"
+    },
+    {
+      "id": "node-query-products",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "name": "Query Products",
+      "position": [450, 300],
+      "parameters": {
+        "method": "GET",
+        "url": "http://host.docker.internal:8000/internal/products",
+        "authentication": "none",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "category",
+              "value": "={{ $json.category }}"
+            },
+            {
+              "name": "max_price",
+              "value": "={{ $json.max_price }}"
+            },
+            {
+              "name": "min_rating",
+              "value": "={{ $json.min_rating }}"
+            },
+            {
+              "name": "keywords",
+              "value": "={{ ($json.keywords || []).join(',') }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-rank-products",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "name": "Rank Products",
+      "position": [650, 300],
+      "parameters": {
+        "jsCode": "const products = $input.first().json;\nconst prefs = $('Webhook').first().json;\nconst keywords = prefs.keywords || [];\n\nfunction score(p) {\n  const r = p.rating || 0;\n  const c = Math.log((p.rating_count || 0) + 1);\n  const kw = keywords.some(k =>\n    (p.product_name || '').toLowerCase().includes(k.toLowerCase()) ||\n    (p.about_product || '').toLowerCase().includes(k.toLowerCase())\n  ) ? 1.5 : 1.0;\n  return r * c * kw;\n}\n\nconst ranked = [...products].sort((a, b) => score(b) - score(a));\nreturn [{ json: { ranked } }];"
+      }
+    },
+    {
+      "id": "node-build-comparison",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "name": "Build Comparison",
+      "position": [850, 300],
+      "parameters": {
+        "jsCode": "const { ranked } = $input.first().json;\nconst top3 = ranked.slice(0, 3);\n\nconst comparison = [\n  { attribute: 'Price (₹)',  values: top3.map(p => p.discounted_price?.toFixed(0) ?? 'N/A') },\n  { attribute: 'Rating',     values: top3.map(p => p.rating?.toFixed(1) ?? 'N/A') },\n  { attribute: 'Reviews',    values: top3.map(p => p.rating_count?.toLocaleString() ?? 'N/A') },\n  { attribute: 'Discount',   values: top3.map(p => p.discount_percentage ? `${p.discount_percentage}%` : 'N/A') },\n];\n\nreturn [{ json: { products: top3, comparison } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Query Products",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Products": {
+      "main": [
+        [
+          {
+            "node": "Rank Products",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rank Products": {
+      "main": [
+        [
+          {
+            "node": "Build Comparison",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": []
+}
