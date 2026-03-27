@@ -1,0 +1,43 @@
+services:
+  frontend:
+    build:
+      context: ../frontend
+      args:
+        # VITE_API_URL is baked into the static build at compile time.
+        # The browser (not the container) makes API calls, so this must be
+        # a URL reachable from the user's browser. localhost:8000 works for local dev.
+        VITE_API_URL: http://localhost:8000
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+  backend:
+    build: ../backend
+    ports:
+      - "8000:8000"
+    env_file: ../.env
+    environment:
+      - N8N_WEBHOOK_URL=http://n8n:5678/webhook/recommend
+      - DATABASE_PATH=/data/products.db
+    volumes:
+      - ../data:/data
+    depends_on:
+      - n8n
+
+  n8n:
+    image: n8nio/n8n:latest
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=false
+      - WEBHOOK_URL=http://localhost:5678/
+      - NODE_FUNCTION_ALLOW_EXTERNAL=*
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ../data:/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  n8n_data:
