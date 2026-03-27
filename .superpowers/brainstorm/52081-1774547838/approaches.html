@@ -1,0 +1,49 @@
+<h2>Which project structure approach fits best?</h2>
+<p class="subtitle">All use monorepo · Docker · SQLite (Kaggle dataset) · No auth</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>FastAPI-centric</h3>
+      <p>FastAPI is the hub. It hosts the MCP server in-process, calls Claude API directly, and manages chat sessions. n8n handles secondary async tasks (indexing, logging). React talks only to FastAPI.</p>
+      <div class="pros-cons" style="margin-top:10px">
+        <div class="pros"><h4>Pros</h4><ul><li>Simple — one Python process does most things</li><li>Easy to debug locally</li><li>Low latency (no extra hops)</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>n8n is underutilised</li><li>Business logic lives in Python, not visible in n8n canvas</li></ul></div>
+      </div>
+      <div style="margin-top:10px;font-size:0.85em;color:#888">
+        <code>frontend/ · backend/ · mcp-server/ · n8n/ · data/ · docker/</code>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>n8n-centric</h3>
+      <p>React POSTs directly to an n8n webhook. n8n orchestrates everything: calls Claude API, calls the Python MCP server via HTTP, formats and returns responses. Python is a thin MCP-only service.</p>
+      <div class="pros-cons" style="margin-top:10px">
+        <div class="pros"><h4>Pros</h4><ul><li>Visual workflow canvas shows full pipeline</li><li>Easy to modify logic without touching code</li><li>Great for demos</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>n8n webhooks add latency &amp; complexity</li><li>Harder to stream responses to frontend</li><li>Tightly coupled to n8n internals</li></ul></div>
+      </div>
+      <div style="margin-top:10px;font-size:0.85em;color:#888">
+        <code>frontend/ · mcp-server/ · n8n/ · data/ · docker/</code>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Hybrid — clear service boundaries <span style="color:#4CAF50;font-size:0.8em">★ Recommended</span></h3>
+      <p>FastAPI handles the chat API (SSE streaming to React) and runs the MCP server in-process. n8n owns the recommendation <em>pipeline</em> — product retrieval → ranking → explanation building. FastAPI calls n8n as a sub-workflow when a recommendation is needed.</p>
+      <div class="pros-cons" style="margin-top:10px">
+        <div class="pros"><h4>Pros</h4><ul><li>Each service has one clear job</li><li>n8n canvas shows the full recommendation pipeline visually</li><li>FastAPI handles streaming &amp; session cleanly</li><li>Matches your interim report architecture exactly</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Two services to manage (FastAPI + n8n)</li><li>Slightly more Docker config</li></ul></div>
+      </div>
+      <div style="margin-top:10px;font-size:0.85em;color:#888">
+        <code>frontend/ · backend/ · mcp-server/ · workflows/ · data/ · docker/ · docs/</code>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,68 @@
+<h2>Design Section 1 — Directory Structure & Components</h2>
+<p class="subtitle">Does this layout look right? We'll cover data flow next.</p>
+
+<div class="section">
+  <h3>Monorepo Layout</h3>
+  <div class="mockup">
+    <div class="mockup-header">internet-shop-chatbot/</div>
+    <div class="mockup-body" style="font-family:monospace;font-size:0.88em;line-height:1.8">
+      <span style="color:#4CAF50">├── frontend/</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#888"># React chat UI</span><br>
+      <span style="color:#888">│ &nbsp; ├── src/components/ </span>&nbsp;&nbsp;<span style="color:#888"># ChatWindow, MessageBubble, ProductCard</span><br>
+      <span style="color:#888">│ &nbsp; ├── src/hooks/ </span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#888"># useChat (SSE connection)</span><br>
+      <span style="color:#888">│ &nbsp; └── Dockerfile</span><br>
+      <br>
+      <span style="color:#2196F3">├── backend/</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#888"># FastAPI + MCP server</span><br>
+      <span style="color:#888">│ &nbsp; ├── app/</span><br>
+      <span style="color:#888">│ &nbsp; │ &nbsp; ├── main.py </span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#888"># FastAPI entry point</span><br>
+      <span style="color:#888">│ &nbsp; │ &nbsp; ├── chat.py </span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#888"># /chat SSE endpoint, conversation loop</span><br>
+      <span style="color:#888">│ &nbsp; │ &nbsp; ├── mcp_tools.py </span><span style="color:#888"># product_search, filter, compare tools</span><br>
+      <span style="color:#888">│ &nbsp; │ &nbsp; └── db.py </span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#888"># SQLite queries</span><br>
+      <span style="color:#888">│ &nbsp; ├── requirements.txt</span><br>
+      <span style="color:#888">│ &nbsp; └── Dockerfile</span><br>
+      <br>
+      <span style="color:#FF9800">├── workflows/</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#888"># n8n workflow JSON exports</span><br>
+      <span style="color:#888">│ &nbsp; ├── recommendation-pipeline.json</span><br>
+      <span style="color:#888">│ &nbsp; └── product-indexing.json</span><br>
+      <br>
+      <span style="color:#9C27B0">├── data/</span><br>
+      <span style="color:#888">│ &nbsp; ├── raw/amazon.csv </span>&nbsp;&nbsp;<span style="color:#888"># Kaggle dataset (committed)</span><br>
+      <span style="color:#888">│ &nbsp; ├── seed.py </span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#888"># CSV → SQLite loader</span><br>
+      <span style="color:#888">│ &nbsp; └── products.db </span>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#888"># SQLite DB (gitignored)</span><br>
+      <br>
+      <span style="color:#F44336">├── docker/</span><br>
+      <span style="color:#888">│ &nbsp; └── docker-compose.yml</span><br>
+      <br>
+      <span style="color:#607D8B">├── docs/</span><br>
+      <span style="color:#888">│ &nbsp; ├── superpowers/specs/ &nbsp;<span style="color:#888"># agent design docs</span></span><br>
+      <span style="color:#888">│ &nbsp; └── guidlines/ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#888"># existing interim report</span></span><br>
+      <br>
+      <span style="color:#607D8B">├── CLAUDE.md</span><br>
+      <span style="color:#607D8B">├── .env.example</span><br>
+      <span style="color:#607D8B">└── .gitignore</span>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Four Services in docker-compose</h3>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px">
+    <div style="background:#1e2a1e;border:1px solid #4CAF50;border-radius:8px;padding:12px">
+      <div style="color:#4CAF50;font-weight:bold">frontend :3000</div>
+      <div style="color:#aaa;font-size:0.85em;margin-top:4px">React + Vite<br>Chat UI, SSE connection to backend</div>
+    </div>
+    <div style="background:#1e2430;border:1px solid #2196F3;border-radius:8px;padding:12px">
+      <div style="color:#2196F3;font-weight:bold">backend :8000</div>
+      <div style="color:#aaa;font-size:0.85em;margin-top:4px">FastAPI<br>Chat API, MCP tools, Claude calls</div>
+    </div>
+    <div style="background:#2a1e0e;border:1px solid #FF9800;border-radius:8px;padding:12px">
+      <div style="color:#FF9800;font-weight:bold">n8n :5678</div>
+      <div style="color:#aaa;font-size:0.85em;margin-top:4px">Self-hosted n8n<br>Recommendation pipeline workflows</div>
+    </div>
+    <div style="background:#1a1a2e;border:1px solid #9C27B0;border-radius:8px;padding:12px">
+      <div style="color:#9C27B0;font-weight:bold">SQLite (file)</div>
+      <div style="color:#aaa;font-size:0.85em;margin-top:4px">products.db (volume mount)<br>Accessed by backend + n8n</div>
+    </div>
+  </div>
+</div>
+
+<p style="margin-top:20px;color:#aaa">Does this structure look right? Reply here — data flow is next.</p>
