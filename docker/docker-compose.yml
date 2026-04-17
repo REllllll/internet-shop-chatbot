@@ -36,6 +36,28 @@ services:
     volumes:
       - n8n_data:/home/node/.n8n
       - ../data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:5678/rest/settings', (r) => {process.exit(r.statusCode===200?0:1)})\""]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  n8n-init:
+    build: ./n8n-init
+    environment:
+      - N8N_URL=http://n8n:5678
+      - N8N_OWNER_EMAIL=admin@example.com
+      - N8N_OWNER_PASSWORD=Admin12345!
+      - N8N_OWNER_FIRST_NAME=Admin
+      - N8N_OWNER_LAST_NAME=User
+      - WORKFLOW_PATH=/workflows/recommendation-pipeline.json
+      - WORKFLOW_NAME=Recommendation Pipeline
+    volumes:
+      - ../workflows/recommendation-pipeline.json:/workflows/recommendation-pipeline.json:ro
+    depends_on:
+      n8n:
+        condition: service_healthy
+    restart: "no"
 
 volumes:
   n8n_data:
