@@ -64,7 +64,7 @@
       "name": "Build Comparison",
       "position": [850, 300],
       "parameters": {
-        "jsCode": "const { ranked } = $input.first().json;\nconst top3 = ranked.slice(0, 3);\n\nconst comparison = [\n  { attribute: 'Price (₹)',  values: top3.map(p => p.discounted_price?.toFixed(0) ?? 'N/A') },\n  { attribute: 'Rating',     values: top3.map(p => p.rating?.toFixed(1) ?? 'N/A') },\n  { attribute: 'Reviews',    values: top3.map(p => p.rating_count?.toLocaleString() ?? 'N/A') },\n  { attribute: 'Discount',   values: top3.map(p => p.discount_percentage ? `${p.discount_percentage}%` : 'N/A') },\n];\n\nreturn [{ json: { products: top3, comparison } }];"
+        "jsCode": "const { ranked } = $input.first().json;\nconst top3 = ranked.slice(0, 3);\nconst toUsd = (inr) => inr ? (inr / 83).toFixed(2) : 'N/A';\n\nconst comparison = [\n  { attribute: 'Price',      values: top3.map(p => toUsd(p.discounted_price)) },\n  { attribute: 'Rating',     values: top3.map(p => p.rating?.toFixed(1) ?? 'N/A') },\n  { attribute: 'Reviews',    values: top3.map(p => p.rating_count?.toLocaleString() ?? 'N/A') },\n  { attribute: 'Discount',   values: top3.map(p => p.discount_percentage ? `${p.discount_percentage}%` : 'N/A') },\n];\n\nreturn [{ json: { products: top3, comparison } }];"
       }
     }
   ],

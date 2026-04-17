@@ -1,6 +1,16 @@
 import type { Product } from '../types'
+import type { CurrencyCode } from '../utils/currency'
+import { convertPrice } from '../utils/currency'
 
-export function ProductCard({ product, rank }: { product: Product; rank: number }) {
+export function ProductCard({
+  product,
+  rank,
+  currency = 'USD',
+}: {
+  product: Product
+  rank: number
+  currency?: CurrencyCode
+}) {
   return (
     <div style={{
       border: rank === 1 ? '1px solid #2563eb' : '1px solid #334155',
@@ -13,10 +23,10 @@ export function ProductCard({ product, rank }: { product: Product; rank: number 
         {product.product_name}
       </div>
       <div style={{ display: 'flex', gap: 12, fontSize: 13, color: '#94a3b8', marginBottom: 6 }}>
-        <span>₹{product.discounted_price?.toFixed(0)}</span>
+        <span>{convertPrice(product.discounted_price, currency)}</span>
         {product.actual_price && product.actual_price > (product.discounted_price ?? 0) && (
           <span style={{ textDecoration: 'line-through', opacity: 0.5 }}>
-            ₹{product.actual_price.toFixed(0)}
+            {convertPrice(product.actual_price, currency)}
           </span>
         )}
         {product.discount_percentage && (

@@ -27,7 +27,7 @@ TOOL_SCHEMAS = [
             "type": "object",
             "properties": {
                 "category": {"type": "string", "description": "Category prefix, e.g. 'Computers&Accessories'"},
-                "max_price": {"type": "number", "description": "Maximum discounted price in INR"},
+                "max_price": {"type": "number", "description": "Maximum discounted price in USD"},
                 "min_rating": {"type": "number", "description": "Minimum rating 0–5"},
             },
         },

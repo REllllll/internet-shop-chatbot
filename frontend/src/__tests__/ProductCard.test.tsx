@@ -16,9 +16,14 @@ describe('ProductCard', () => {
     expect(screen.getByText('USB Lightning Cable')).toBeInTheDocument()
   })
 
-  it('renders discounted price', () => {
+  it('renders discounted price in USD by default', () => {
     render(<ProductCard product={product} rank={1} />)
-    expect(screen.getByText(/₹399/)).toBeInTheDocument()
+    expect(screen.getByText(/\$4\.79/)).toBeInTheDocument()
+  })
+
+  it('renders price in INR when currency is INR', () => {
+    render(<ProductCard product={product} rank={1} currency="INR" />)
+    expect(screen.getByText(/₹399\.00/)).toBeInTheDocument()
   })
 
   it('renders rating', () => {

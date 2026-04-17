@@ -39,6 +39,15 @@ export function MessageBubble({ message }: { message: Message }) {
             )
           },
           a: ({ ...props }) => <a style={{ color: '#93c5fd' }} target="_blank" rel="noreferrer" {...props} />,
+          table: ({ ...props }) => (
+            <table style={{ borderCollapse: 'collapse', fontSize: 13, width: '100%' }} {...props} />
+          ),
+          th: ({ ...props }) => (
+            <th style={{ border: '1px solid #334155', padding: '6px 8px', textAlign: 'left', background: '#0f172a' }} {...props} />
+          ),
+          td: ({ ...props }) => (
+            <td style={{ border: '1px solid #334155', padding: '6px 8px' }} {...props} />
+          ),
         }}
       >
         {message.content}

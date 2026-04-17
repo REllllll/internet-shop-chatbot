@@ -1,6 +1,16 @@
 import type { ComparisonRow, Product } from '../types'
+import type { CurrencyCode } from '../utils/currency'
+import { formatComparisonValue } from '../utils/currency'
 
-export function ComparisonTable({ products, rows }: { products: Product[]; rows: ComparisonRow[] }) {
+export function ComparisonTable({
+  products,
+  rows,
+  currency = 'USD',
+}: {
+  products: Product[]
+  rows: ComparisonRow[]
+  currency?: CurrencyCode
+}) {
   return (
     <div style={{ overflowX: 'auto', marginTop: 12 }}>
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
@@ -21,7 +31,9 @@ export function ComparisonTable({ products, rows }: { products: Product[]; rows:
             <tr key={row.attribute} style={{ background: i % 2 === 0 ? '#0f172a' : '#1e293b' }}>
               <td style={{ padding: '6px 8px', color: '#94a3b8' }}>{row.attribute}</td>
               {row.values.map((val, j) => (
-                <td key={j} style={{ textAlign: 'center', padding: '6px 8px', color: '#f1f5f9' }}>{val}</td>
+                <td key={j} style={{ textAlign: 'center', padding: '6px 8px', color: '#f1f5f9' }}>
+                  {formatComparisonValue(row.attribute, val, currency)}
+                </td>
               ))}
             </tr>
           ))}
