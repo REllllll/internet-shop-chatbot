@@ -1,7 +1,14 @@
 from fastapi import APIRouter, Query
+from pydantic import BaseModel
 from . import db
 
 router = APIRouter(prefix="/internal")
+
+
+class ProductSearchRequest(BaseModel):
+    query: str | None = None
+    category: str | None = None
+    budget: float | None = None
 
 
 @router.get("/products")
@@ -19,4 +26,16 @@ def get_products(
         min_rating=min_rating,
         keywords=kw_list,
         limit=limit,
+    )
+
+
+@router.post("/products/search")
+def search_products(request: ProductSearchRequest) -> list[dict]:
+    """Search products for n8n workflow integration."""
+    keywords = [request.query] if request.query else None
+    return db.filter_products(
+        category=request.category,
+        max_price=request.budget,
+        keywords=keywords,
+        limit=5,
     )

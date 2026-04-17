@@ -32,9 +32,40 @@ class ConversationSession:
 
 _sessions: dict[str, ConversationSession] = {}
 
+MALFORMED_TOOL_RETRY_PROMPT = (
+    "Your previous tool call was malformed. "
+    "Only call get_recommendations when category and at least one of "
+    "(max_price, use_case, keywords) are present. "
+    "If that information is missing, ask one clarifying question instead."
+)
+MALFORMED_TOOL_ERROR = (
+    "I hit a tool formatting error while preparing recommendations. "
+    "Please restate your request with a product category and one preference such as budget, use case, or keywords."
+)
+
 
 class ChatRequest(BaseModel):
     message: str
+
+
+class MalformedToolCallError(ValueError):
+    pass
+
+
+def _extract_text_content(blocks) -> str:
+    texts = []
+    for block in blocks:
+        if getattr(block, "type", None) == "text" and getattr(block, "text", None):
+            texts.append(block.text.strip())
+    return " ".join(text for text in texts if text)
+
+
+def _format_tool_result_message(tool_name: str, tool_input: dict, result: str) -> str:
+    return (
+        f"Tool {tool_name} returned JSON results for query {tool_input}:\n"
+        f"{result}\n"
+        "Use this data to answer the user directly, without calling another tool unless the user asks for a new lookup."
+    )
 
 
 def _get_or_create_session(session_id: str | None) -> ConversationSession:
@@ -46,16 +77,31 @@ def _get_or_create_session(session_id: str | None) -> ConversationSession:
     return session
 
 
+def _is_valid_recommendation_request(tool_input: dict) -> bool:
+    if not isinstance(tool_input, dict):
+        return False
+    if not tool_input.get("category"):
+        return False
+    return any(tool_input.get(field) for field in ("max_price", "use_case", "keywords"))
+
+
+def _validate_tool_call(tool_name: str, tool_input: dict) -> None:
+    if tool_name == "get_recommendations" and not _is_valid_recommendation_request(tool_input):
+        raise MalformedToolCallError("get_recommendations requires category plus one additional preference")
+
+
 def _stream_response(session: ConversationSession, user_message: str):
     client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
     model = os.getenv("CLAUDE_MODEL", "claude-sonnet-4-6")
     session.messages.append({"role": "user", "content": user_message})
+    retry_instruction = ""
+    retries = 0
 
     while True:
         with client.messages.stream(
             model=model,
             max_tokens=1024,
-            system=SYSTEM_PROMPT,
+            system=f"{SYSTEM_PROMPT}\n\n{retry_instruction}".strip(),
             tools=TOOL_SCHEMAS,
             messages=session.messages,
         ) as stream:
@@ -69,28 +115,43 @@ def _stream_response(session: ConversationSession, user_message: str):
 
             final = stream.get_final_message()
 
-        session.messages.append({"role": "assistant", "content": final.content})
-
         if final.stop_reason != "tool_use":
+            session.messages.append({"role": "assistant", "content": final.content})
             break
 
-        tool_results = []
+        try:
+            for block in final.content:
+                if block.type == "tool_use":
+                    _validate_tool_call(block.name, block.input)
+        except MalformedToolCallError:
+            if retries < 1:
+                retries += 1
+                retry_instruction = MALFORMED_TOOL_RETRY_PROMPT
+                continue
+
+            yield f"data: {json.dumps({'type': 'text', 'content': MALFORMED_TOOL_ERROR})}\n\n"
+            session.messages.append({"role": "assistant", "content": MALFORMED_TOOL_ERROR})
+            break
+
+        retry_instruction = ""
+        assistant_text = _extract_text_content(final.content)
+        if assistant_text:
+            session.messages.append({"role": "assistant", "content": assistant_text})
+
+        tool_result_messages = []
         for block in final.content:
             if block.type == "tool_use":
                 yield f"data: {json.dumps({'type': 'tool_call', 'tool': block.name})}\n\n"
                 result = execute_tool(block.name, block.input)
-                tool_results.append({
-                    "type": "tool_result",
-                    "tool_use_id": block.id,
-                    "content": result,
-                })
+                tool_result_messages.append(_format_tool_result_message(block.name, block.input, result))
                 if block.name == "get_recommendations":
                     try:
                         yield f"data: {json.dumps({'type': 'products', 'data': json.loads(result)})}\n\n"
                     except json.JSONDecodeError:
                         pass
 
-        session.messages.append({"role": "user", "content": tool_results})
+        if tool_result_messages:
+            session.messages.append({"role": "user", "content": "\n\n".join(tool_result_messages)})
 
     yield f"data: {json.dumps({'type': 'done'})}\n\n"
 

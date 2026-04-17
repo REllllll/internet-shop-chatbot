@@ -22,7 +22,7 @@
       "position": [450, 300],
       "parameters": {
         "method": "GET",
-        "url": "http://host.docker.internal:8000/internal/products",
+        "url": "http://backend:8000/internal/products",
         "authentication": "none",
         "sendQuery": true,
         "queryParameters": {
@@ -64,7 +64,7 @@
       "name": "Build Comparison",
       "position": [850, 300],
       "parameters": {
-        "jsCode": "const { ranked } = $input.first().json;\nconst top3 = ranked.slice(0, 3);\n\nconst comparison = [\n  { attribute: 'Price (₹)',  values: top3.map(p => p.discounted_price?.toFixed(0) ?? 'N/A') },\n  { attribute: 'Rating',     values: top3.map(p => p.rating?.toFixed(1) ?? 'N/A') },\n  { attribute: 'Reviews',    values: top3.map(p => p.rating_count?.toLocaleString() ?? 'N/A') },\n  { attribute: 'Discount',   values: top3.map(p => p.discount_percentage ? `${p.discount_percentage}%` : 'N/A') },\n];\n\nreturn [{ json: { products: top3, comparison } }];"
+        "jsCode": "const { ranked } = $input.first().json;\nconst top3 = ranked.slice(0, 3);\n\nfunction keyFeatures(product) {\n  const raw = (product.about_product || '').split('|');\n  const cleaned = raw.map(feature => feature.trim()).filter(Boolean);\n  return cleaned.slice(0, 3).join(' | ') || 'N/A';\n}\n\nconst comparison = [\n  { attribute: 'Price (₹)', values: top3.map(p => p.discounted_price?.toFixed(0) ?? 'N/A') },\n  { attribute: 'Rating', values: top3.map(p => p.rating?.toFixed(1) ?? 'N/A') },\n  { attribute: 'Key Features', values: top3.map(keyFeatures) },\n];\n\nreturn [{ json: { products: top3, comparison } }];"
       }
     }
   ],

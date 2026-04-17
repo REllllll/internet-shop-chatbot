@@ -1,4 +1,5 @@
 import os
+import re
 import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
@@ -21,14 +22,25 @@ def get_db():
         conn.close()
 
 
+def _normalize_fts_query(query: str) -> str:
+    tokens = re.findall(r"[A-Za-z0-9]+", query or "")
+    if not tokens:
+        return ""
+    return " AND ".join(f'"{token}"' for token in tokens)
+
+
 def search_products(query: str, limit: int = 20) -> list[dict]:
+    normalized_query = _normalize_fts_query(query)
+    if not normalized_query:
+        return []
+
     with get_db() as conn:
         rows = conn.execute(
             """SELECT p.* FROM products p
                JOIN products_fts fts ON p.product_id = fts.product_id
                WHERE products_fts MATCH ?
                LIMIT ?""",
-            (query, limit),
+            (normalized_query, limit),
         ).fetchall()
     return [dict(r) for r in rows]
 
