@@ -31,7 +31,17 @@ export function ComparisonTable({
             <tr key={row.attribute} style={{ background: i % 2 === 0 ? '#0f172a' : '#1e293b' }}>
               <td style={{ padding: '6px 8px', color: '#94a3b8' }}>{row.attribute}</td>
               {row.values.map((val, j) => (
-                <td key={j} style={{ textAlign: 'center', padding: '6px 8px', color: '#f1f5f9' }}>
+                <td
+                  key={j}
+                  style={{
+                    textAlign: 'center',
+                    padding: '6px 8px',
+                    color: '#f1f5f9',
+                    whiteSpace: 'normal',
+                    lineHeight: 1.4,
+                    verticalAlign: 'top',
+                  }}
+                >
                   {formatComparisonValue(row.attribute, val, currency)}
                 </td>
               ))}

@@ -53,6 +53,30 @@ TOOL_SCHEMAS = [
 ]
 
 
+def _extract_key_features(product: dict, limit: int = 3) -> str:
+    raw_features = (product.get("about_product") or "").split("|")
+    cleaned = [feature.strip() for feature in raw_features if feature.strip()]
+    return " | ".join(cleaned[:limit]) or "N/A"
+
+
+def _build_comparison(products: list[dict]) -> list[dict]:
+    top3 = products[:3]
+    return [
+        {
+            "attribute": "Price (₹)",
+            "values": [f"{p.get('discounted_price'):.0f}" if p.get("discounted_price") is not None else "N/A" for p in top3],
+        },
+        {
+            "attribute": "Rating",
+            "values": [f"{p.get('rating'):.1f}" if p.get("rating") is not None else "N/A" for p in top3],
+        },
+        {
+            "attribute": "Key Features",
+            "values": [_extract_key_features(p) for p in top3],
+        },
+    ]
+
+
 def execute_tool(tool_name: str, tool_input: dict) -> str:
     if tool_name == "search_products":
         return json.dumps(db.search_products(tool_input["query"]))
@@ -80,6 +104,7 @@ def execute_tool(tool_name: str, tool_input: dict) -> str:
                 min_rating=tool_input.get("min_rating"),
                 keywords=tool_input.get("keywords"),
             )
-            return json.dumps({"products": results[:5], "comparison": [], "fallback": False})
+            top3 = results[:3]
+            return json.dumps({"products": top3, "comparison": _build_comparison(top3), "fallback": True})
 
     return json.dumps({"error": f"Unknown tool: {tool_name}"})

@@ -11,6 +11,7 @@ const products = [
 const rows: ComparisonRow[] = [
   { attribute: 'Price', values: ['399', '299', '499'] },
   { attribute: 'Rating',    values: ['4.2', '4.0', '4.5'] },
+  { attribute: 'Key Features', values: ['Fast charging | Braided cable', 'Micro USB | Nylon braid', 'Portable audio | Wireless'] },
 ]
 
 describe('ComparisonTable', () => {
@@ -39,5 +40,11 @@ describe('ComparisonTable', () => {
   it('converts price values to INR when selected', () => {
     render(<ComparisonTable products={products} rows={rows} currency="INR" />)
     expect(screen.getByText('₹399.00')).toBeInTheDocument()
+  })
+
+  it('renders key feature comparison content', () => {
+    render(<ComparisonTable products={products} rows={rows} />)
+    expect(screen.getByText('Key Features')).toBeInTheDocument()
+    expect(screen.getByText('Fast charging | Braided cable')).toBeInTheDocument()
   })
 })

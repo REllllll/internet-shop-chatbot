@@ -135,8 +135,8 @@ and workflow components. The main activities to be undertaken are outlined below
 
 
 - Integrating system components and developing full functionality to meet the require-
-    ments specification, including comparison generation and complementary product
-    suggestion.
+    ments specification, including comparison generation and recommendation expla-
+    nation.
 - Evaluating the system through testing and debugging of workflows, retrieval accu-
     racy, and structured LLM outputs.
 - Refining prompts, schemas, and pipeline logic through iterative experimentation
@@ -228,8 +228,8 @@ Preference Elicitation Module
 MCP Retrieval Prototype
 Recommendation En-
 gine Development
-Comparison & Supple-
-mentary Product Module
+Comparison Module &
+Explanation Refinement
 System Integration
 Debugging & Pri-
 vacy Validation
@@ -296,6 +296,5 @@ arXiv:2503.23278, 2025.
 ```
 [10] Lorraine Mc Ginty and Barry Smyth. Comparison-based recommendation. In Euro-
 pean conference on case-based reasoning, pages 575–589. Springer, 2002.
-
 
 

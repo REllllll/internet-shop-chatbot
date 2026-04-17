@@ -10,6 +10,11 @@ def test_search_returns_empty_for_no_match(test_db):
     assert db.search_products("nonexistent_xyz_123") == []
 
 
+def test_search_handles_hyphenated_terms(test_db):
+    results = db.search_products("USB-C cable")
+    assert any(r["product_id"] == "B002" for r in results)
+
+
 def test_filter_by_category(test_db):
     results = db.filter_products(category="Computers&Accessories")
     assert len(results) == 2

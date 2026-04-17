@@ -30,7 +30,7 @@ The system has four main components:
 
 1. **Conversational Layer** — preference elicitation module, manages dialogue state across turns, incrementally refines user intent
 2. **MCP Retrieval Module** — connects LLM to live product database via MCP tools; handles real-time queries, caching, and fallback sources
-3. **Recommendation Engine** — ranks and selects products, generates explanations, produces comparison tables between similar items, suggests complementary products
+3. **Recommendation Engine** — ranks and selects products, generates grounded explanations, and produces comparison tables between similar items
 4. **n8n Workflow** — orchestrates the full pipeline: data retrieval → ranking → response formatting → error handling/retry logic
 
 ## LLM Output Constraints

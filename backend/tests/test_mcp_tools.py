@@ -37,10 +37,13 @@ def test_get_recommendations_calls_n8n(test_db):
 
 def test_get_recommendations_falls_back_when_n8n_down(test_db):
     with patch("app.mcp_tools.httpx.post", side_effect=httpx.RequestError("down")):
-        result = execute_tool("get_recommendations", {"max_price": 500.0})
+        result = execute_tool("get_recommendations", {"max_price": 2000.0})
         data = json.loads(result)
         assert "products" in data
         assert data.get("fallback") is True
+        assert len(data["products"]) == 3
+        assert [row["attribute"] for row in data["comparison"]] == ["Price (₹)", "Rating", "Key Features"]
+        assert all(row["values"] for row in data["comparison"])
 
 
 def test_unknown_tool_returns_error(test_db):
