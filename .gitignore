@@ -9,3 +9,4 @@ n8n_data/
 .DS_Store
 ._*
 .superpowers/
+.worktree/

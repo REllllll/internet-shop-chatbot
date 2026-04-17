@@ -69,16 +69,17 @@ def execute_tool(tool_name: str, tool_input: dict) -> str:
     if tool_name == "get_recommendations":
         n8n_url = os.getenv("N8N_WEBHOOK_URL", "http://n8n:5678/webhook/recommend")
         try:
-            resp = httpx.post(n8n_url, json=tool_input, timeout=30.0)
+            resp = httpx.post(n8n_url, json=tool_input, timeout=5.0)
             resp.raise_for_status()
             return resp.text
         except (httpx.RequestError, httpx.HTTPStatusError):
+            # n8n unavailable - query DB directly (not a fallback, just direct access)
             results = db.filter_products(
                 category=tool_input.get("category"),
                 max_price=tool_input.get("max_price"),
                 min_rating=tool_input.get("min_rating"),
                 keywords=tool_input.get("keywords"),
             )
-            return json.dumps({"products": results[:3], "comparison": [], "fallback": True})
+            return json.dumps({"products": results[:5], "comparison": [], "fallback": False})
 
     return json.dumps({"error": f"Unknown tool: {tool_name}"})
