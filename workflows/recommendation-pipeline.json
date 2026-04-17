@@ -2,7 +2,7 @@
   "name": "Recommendation Pipeline",
   "nodes": [
     {
-      "id": "node-webhook",
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
       "name": "Webhook",
@@ -10,12 +10,12 @@
       "parameters": {
         "httpMethod": "POST",
         "path": "recommend",
-        "responseMode": "responseNode"
+        "responseMode": "lastNode"
       },
       "webhookId": "recommend"
     },
     {
-      "id": "node-query-products",
+      "id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "name": "Query Products",
@@ -48,7 +48,7 @@
       }
     },
     {
-      "id": "node-rank-products",
+      "id": "c3d4e5f6-a7b8-9012-cdef-123456789012",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "name": "Rank Products",
@@ -58,7 +58,7 @@
       }
     },
     {
-      "id": "node-build-comparison",
+      "id": "d4e5f6a7-b8c9-0123-defa-234567890123",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "name": "Build Comparison",
