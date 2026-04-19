@@ -19,4 +19,5 @@ def test_workflow_builds_key_feature_comparison_rows():
     code = build_comparison["parameters"]["jsCode"]
 
     assert "Key Features" in code
+    # Comparison rows should not include reviews.
     assert "Reviews" not in code
