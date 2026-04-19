@@ -28,4 +28,5 @@ export interface RecommendationResult {
   products: Product[]
   comparison: ComparisonRow[]
   fallback?: boolean
+  empty?: boolean
 }

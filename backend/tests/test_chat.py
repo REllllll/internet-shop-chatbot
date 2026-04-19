@@ -1,3 +1,4 @@
+import json
 import os
 from unittest.mock import MagicMock, patch
 
@@ -142,3 +143,67 @@ def test_chat_uses_provider_safe_history_after_tool_execution(client):
         '[{"title":"USB-C Cable","discounted_price":299}]\n'
         "Use this data to answer the user directly, without calling another tool unless the user asks for a new lookup."
     )
+
+
+def test_chat_keeps_recommendation_products_when_later_tool_does_ad_hoc_lookup(client):
+    initial_payload = json.dumps({
+        "products": [
+            {
+                "product_id": "B900",
+                "product_name": "Earbud Tips",
+                "category": "Electronics|Headphones,Earbuds&Accessories|Earpads",
+                "discounted_price": 99.0,
+                "actual_price": 199.0,
+                "discount_percentage": 50.0,
+                "rating": 3.8,
+                "rating_count": 120,
+                "about_product": "Replacement earbud tips",
+                "img_link": "",
+                "product_link": "https://amazon.in/B900",
+            }
+        ],
+        "comparison": [
+            {"attribute": "Price (₹)", "values": ["99"]},
+            {"attribute": "Rating", "values": ["3.8"]},
+            {"attribute": "Key Features", "values": ["Replacement earbud tips"]},
+        ],
+        "fallback": True,
+    })
+    refined_results = json.dumps([
+        {
+            "product_id": "B901",
+            "product_name": "Commute Headphones",
+            "category": "Electronics|Headphones,Earbuds&Accessories|Headphones",
+            "discounted_price": 89.0,
+            "actual_price": 149.0,
+            "discount_percentage": 40.0,
+            "rating": 4.4,
+            "rating_count": 4200,
+            "about_product": "Closed-back headphones for commuting and calls",
+            "img_link": "",
+            "product_link": "https://amazon.in/B901",
+        }
+    ])
+
+    with patch("app.chat.anthropic.Anthropic") as MockClient, patch("app.chat.execute_tool") as mock_execute_tool:
+        mock_execute_tool.side_effect = [initial_payload, refined_results]
+        MockClient.return_value.messages.stream.side_effect = [
+            _mock_tool_stream(
+                "get_recommendations",
+                {"category": "headphones", "max_price": 100.0},
+                text="Here is an initial match.",
+            ),
+            _mock_tool_stream(
+                "search_products",
+                {"query": "commute headphones"},
+                text="I found a better headphone match.",
+            ),
+            _mock_stream("These are better for your use case."),
+        ]
+
+        response = client.post("/chat", json={"message": "I need headphones under 100 for commuting"})
+
+    assert response.status_code == 200
+    assert response.text.count('"type": "products"') == 1
+    assert "Earbud Tips" in response.text
+    assert "Commute Headphones" not in response.text

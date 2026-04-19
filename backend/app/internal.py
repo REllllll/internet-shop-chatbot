@@ -22,7 +22,7 @@ def get_products(
     kw_list = [k.strip() for k in keywords.split(",") if k.strip()] if keywords else None
     return db.filter_products(
         category=category,
-        max_price=max_price,
+        max_price=db.usd_to_inr(max_price),
         min_rating=min_rating,
         keywords=kw_list,
         limit=limit,
@@ -35,7 +35,7 @@ def search_products(request: ProductSearchRequest) -> list[dict]:
     keywords = [request.query] if request.query else None
     return db.filter_products(
         category=request.category,
-        max_price=request.budget,
+        max_price=db.usd_to_inr(request.budget),
         keywords=keywords,
         limit=5,
     )

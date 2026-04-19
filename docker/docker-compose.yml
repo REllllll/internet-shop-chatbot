@@ -22,6 +22,7 @@ services:
       - DATABASE_PATH=/data/products.db
     volumes:
       - ../data:/data
+      - ../workflows:/workflows:ro
     depends_on:
       - n8n
 

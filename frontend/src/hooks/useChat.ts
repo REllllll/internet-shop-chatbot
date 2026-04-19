@@ -12,6 +12,7 @@ export function useChat() {
 
   const sendMessage = useCallback(async (text: string) => {
     const assistantId = crypto.randomUUID()
+    setRecommendations(null)
     setMessages(prev => [
       ...prev,
       { id: crypto.randomUUID(), role: 'user', content: text },

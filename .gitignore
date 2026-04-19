@@ -8,6 +8,7 @@ frontend/dist/
 n8n_data/
 .DS_Store
 ._*
+**/._*
 .superpowers/
 .worktree/
 .worktrees/

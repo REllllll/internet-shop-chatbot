@@ -33,6 +33,9 @@ export function ChatWindow({ messages, isLoading, onSend }: Props) {
       <form onSubmit={handleSubmit}
         style={{ padding: 16, borderTop: '1px solid #1e293b', display: 'flex', gap: 8 }}>
         <input
+          id="chat-message"
+          name="message"
+          aria-label="Chat message"
           value={input}
           onChange={e => setInput(e.target.value)}
           placeholder="Type a message..."

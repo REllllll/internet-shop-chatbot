@@ -29,19 +29,19 @@
           "parameters": [
             {
               "name": "category",
-              "value": "={{ $json.category }}"
+              "value": "={{ $json.body.category }}"
             },
             {
               "name": "max_price",
-              "value": "={{ $json.max_price }}"
+              "value": "={{ $json.body.max_price }}"
             },
             {
               "name": "min_rating",
-              "value": "={{ $json.min_rating }}"
+              "value": "={{ $json.body.min_rating }}"
             },
             {
               "name": "keywords",
-              "value": "={{ ($json.keywords || []).join(',') }}"
+              "value": "={{ ($json.body.keywords || []).join(',') }}"
             }
           ]
         }
@@ -54,7 +54,7 @@
       "name": "Rank Products",
       "position": [650, 300],
       "parameters": {
-        "jsCode": "const products = $input.first().json;\nconst prefs = $('Webhook').first().json;\nconst keywords = prefs.keywords || [];\n\nfunction score(p) {\n  const r = p.rating || 0;\n  const c = Math.log((p.rating_count || 0) + 1);\n  const kw = keywords.some(k =>\n    (p.product_name || '').toLowerCase().includes(k.toLowerCase()) ||\n    (p.about_product || '').toLowerCase().includes(k.toLowerCase())\n  ) ? 1.5 : 1.0;\n  return r * c * kw;\n}\n\nconst ranked = [...products].sort((a, b) => score(b) - score(a));\nreturn [{ json: { ranked } }];"
+        "jsCode": "const products = $input.all().map(item => item.json);\nconst prefs = $('Webhook').first().json.body || {};\nconst keywords = Array.isArray(prefs.keywords) ? prefs.keywords : [];\nconst requestedCategory = (prefs.category || '').toLowerCase();\nconst terms = [...new Set([...keywords, prefs.use_case || ''].flatMap(part => ((part || '').toLowerCase().match(/[a-z0-9]+/g) || [])))];\nconst positiveCategoryTerms = ['speakers', 'bluetoothspeakers', 'outdoorspeakers'];\nconst negativeCategoryTerms = ['cables', 'adapter', 'adapters', 'receiver', 'receivers', 'smartwatch', 'smartwatches'];\n\nfunction includesAny(text, tokens) {\n  return tokens.some(token => text.includes(token));\n}\n\nfunction score(p) {\n  const name = (p.product_name || '').toLowerCase();\n  const about = (p.about_product || '').toLowerCase();\n  const category = (p.category || '').toLowerCase();\n  let matchScore = 0;\n\n  if (requestedCategory) {\n    if (category.startsWith(requestedCategory)) {\n      matchScore += 8;\n    } else if (category.includes(requestedCategory)) {\n      matchScore += 4;\n    }\n  }\n\n  if (includesAny(category, positiveCategoryTerms)) {\n    matchScore += 20;\n  }\n  if (includesAny(category, negativeCategoryTerms)) {\n    matchScore -= 18;\n  }\n\n  for (const term of terms) {\n    if (name.includes(term)) {\n      matchScore += 8;\n    }\n    if (category.includes(term)) {\n      matchScore += 6;\n    } else if (about.includes(term)) {\n      matchScore += 2;\n    }\n  }\n\n  if ((name.includes('bluetooth') && name.includes('speaker')) || category.includes('bluetoothspeakers')) {\n    matchScore += 10;\n  }\n  if ((name.includes('portable') || about.includes('portable') || category.includes('outdoorspeakers')) && terms.includes('travel')) {\n    matchScore += 4;\n  }\n\n  const rating = p.rating || 0;\n  const popularity = Math.log((p.rating_count || 0) + 1);\n  return matchScore * 10 + rating + popularity;\n}\n\nconst ranked = [...products].sort((a, b) => score(b) - score(a));\nreturn [{ json: { ranked } }];"
       }
     },
     {

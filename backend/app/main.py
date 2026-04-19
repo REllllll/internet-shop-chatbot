@@ -9,6 +9,16 @@ from fastapi.middleware.cors import CORSMiddleware
 load_dotenv()
 
 
+def _get_cors_allow_origins() -> list[str]:
+    configured = os.getenv("CORS_ALLOW_ORIGINS")
+    if configured:
+        return [origin.strip() for origin in configured.split(",") if origin.strip()]
+    return [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ]
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     db_path = os.getenv("DATABASE_PATH", str(Path(__file__).parents[2] / "data" / "products.db"))
@@ -24,7 +34,7 @@ app = FastAPI(title="ShopBot API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=_get_cors_allow_origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

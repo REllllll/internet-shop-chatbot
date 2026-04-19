@@ -8,7 +8,7 @@ from fastapi import APIRouter, Cookie, Response
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
-from .mcp_tools import TOOL_SCHEMAS, execute_tool
+from .mcp_tools import TOOL_SCHEMAS, execute_tool, recommendation_payload_from_tool_result
 
 router = APIRouter()
 
@@ -91,13 +91,23 @@ def _validate_tool_call(tool_name: str, tool_input: dict) -> None:
 
 
 def _stream_response(session: ConversationSession, user_message: str):
-    client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.info(f"Starting stream for message: {user_message[:50]}")
+
+    client = anthropic.Anthropic(
+        api_key=os.getenv("ANTHROPIC_API_KEY"),
+        base_url=os.getenv("ANTHROPIC_BASE_URL")
+    )
     model = os.getenv("CLAUDE_MODEL", "claude-sonnet-4-6")
+    logger.info(f"Using model: {model}, base_url: {os.getenv('ANTHROPIC_BASE_URL')}")
+
     session.messages.append({"role": "user", "content": user_message})
     retry_instruction = ""
     retries = 0
 
     while True:
+        logger.info("Calling Claude API...")
         with client.messages.stream(
             model=model,
             max_tokens=1024,
@@ -144,11 +154,9 @@ def _stream_response(session: ConversationSession, user_message: str):
                 yield f"data: {json.dumps({'type': 'tool_call', 'tool': block.name})}\n\n"
                 result = execute_tool(block.name, block.input)
                 tool_result_messages.append(_format_tool_result_message(block.name, block.input, result))
-                if block.name == "get_recommendations":
-                    try:
-                        yield f"data: {json.dumps({'type': 'products', 'data': json.loads(result)})}\n\n"
-                    except json.JSONDecodeError:
-                        pass
+                recommendation_payload = recommendation_payload_from_tool_result(block.name, result)
+                if recommendation_payload is not None:
+                    yield f"data: {json.dumps({'type': 'products', 'data': recommendation_payload})}\n\n"
 
         if tool_result_messages:
             session.messages.append({"role": "user", "content": "\n\n".join(tool_result_messages)})

@@ -113,6 +113,29 @@ def get_workflows(cookie):
     return data
 
 
+def get_workflow(cookie, workflow_id):
+    _, body = api_request(f"/rest/workflows/{workflow_id}", headers={"Cookie": cookie})
+    data = json.loads(body)
+    return data.get("data", data)
+
+
+def workflow_update_payload(workflow, existing_workflow):
+    return {
+        "name": workflow["name"],
+        "nodes": workflow.get("nodes", []),
+        "connections": workflow.get("connections", {}),
+        "settings": workflow.get("settings", {}),
+        "staticData": workflow.get("staticData"),
+        "meta": existing_workflow.get("meta"),
+        "pinData": existing_workflow.get("pinData"),
+        "versionId": existing_workflow.get("versionId"),
+        "tags": [
+            tag.get("id") if isinstance(tag, dict) else tag
+            for tag in existing_workflow.get("tags", [])
+        ],
+    }
+
+
 def import_workflow(cookie):
     print(f"Importing workflow from {WORKFLOW_PATH}...")
     with open(WORKFLOW_PATH, "r", encoding="utf-8") as f:
@@ -125,8 +148,18 @@ def import_workflow(cookie):
     workflows = get_workflows(cookie)
     for wf in workflows:
         if wf.get("name") == WORKFLOW_NAME:
-            print(f"Workflow already exists with ID {wf['id']}.")
-            return wf["id"]
+            workflow_id = wf["id"]
+            print(f"Workflow already exists with ID {workflow_id}, updating it...")
+            existing_workflow = get_workflow(cookie, workflow_id)
+            payload = workflow_update_payload(workflow, existing_workflow)
+            api_request(
+                f"/rest/workflows/{workflow_id}?forceSave=true",
+                method="PATCH",
+                data=payload,
+                headers={"Cookie": cookie},
+            )
+            print(f"Workflow {workflow_id} updated.")
+            return workflow_id
 
     try:
         _, body = api_request(
@@ -146,15 +179,13 @@ def import_workflow(cookie):
 def activate_workflow(cookie, workflow_id):
     print(f"Activating workflow {workflow_id}...")
     # Fetch versionId required by newer n8n APIs
-    _, body = api_request(f"/rest/workflows/{workflow_id}", headers={"Cookie": cookie})
-    data = json.loads(body)
-    wf = data.get("data", data)
-    version_id = wf.get("versionId") or data.get("versionId")
+    wf = get_workflow(cookie, workflow_id)
+    version_id = wf.get("versionId")
     if not version_id:
         raise RuntimeError("Could not determine workflow versionId")
 
-    if wf.get("active"):
-        print("Workflow is already active.")
+    if wf.get("active") and wf.get("activeVersionId") == version_id:
+        print("Workflow is already active on the latest version.")
         return
 
     try:

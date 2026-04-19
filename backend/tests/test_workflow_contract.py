@@ -17,3 +17,22 @@ def test_workflow_builds_key_feature_comparison_rows():
 
     assert attributes == ["Price (₹)", "Rating", "Discount", "Key Features"]
     assert "Reviews" not in code
+
+
+def test_workflow_queries_backend_service_from_n8n():
+    workflow = _load_workflow()
+    query_products = next(node for node in workflow["nodes"] if node["name"] == "Query Products")
+
+    assert query_products["parameters"]["url"] == "http://backend:8000/internal/products"
+
+
+def test_workflow_rank_products_prefers_speaker_categories_and_penalizes_accessories():
+    workflow = _load_workflow()
+    rank_products = next(node for node in workflow["nodes"] if node["name"] == "Rank Products")
+    code = rank_products["parameters"]["jsCode"].lower()
+
+    assert "bluetoothspeakers" in code
+    assert "outdoorspeakers" in code
+    assert "cables" in code
+    assert "smartwatches" in code
+    assert "use_case" in code

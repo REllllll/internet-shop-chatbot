@@ -8,6 +8,8 @@ import { CURRENCIES, type CurrencyCode } from './utils/currency'
 export default function App() {
   const { messages, recommendations, isLoading, sendMessage } = useChat()
   const [currency, setCurrency] = useState<CurrencyCode>('USD')
+  const hasRecommendations = Boolean(recommendations)
+  const hasProducts = (recommendations?.products.length ?? 0) > 0
 
   return (
     <div style={{
@@ -46,21 +48,34 @@ export default function App() {
             ))}
           </select>
         </div>
-        {recommendations ? (
+        {hasRecommendations ? (
           <>
-            <div style={{ fontWeight: 600, fontSize: 16, marginBottom: 16, color: '#94a3b8' }}>
-              {recommendations.fallback ? 'Products found (pipeline unavailable)' : `Top ${recommendations.products.length} Picks`}
-            </div>
-            {recommendations.products.map((p, i) => (
-              <ProductCard key={p.product_id} product={p} rank={i + 1} currency={currency} />
-            ))}
-            {recommendations.comparison.length > 0 && (
+            {hasProducts ? (
               <>
-                <div style={{ fontWeight: 600, fontSize: 14, marginTop: 20, marginBottom: 8, color: '#64748b' }}>
-                  COMPARISON
+                <div style={{ fontWeight: 600, fontSize: 16, marginBottom: 16, color: '#94a3b8' }}>
+                  {recommendations?.fallback ? 'Products found (pipeline unavailable)' : `Top ${recommendations?.products.length} Picks`}
                 </div>
-                <ComparisonTable products={recommendations.products} rows={recommendations.comparison} currency={currency} />
+                {recommendations?.products.map((p, i) => (
+                  <ProductCard key={p.product_id} product={p} rank={i + 1} currency={currency} />
+                ))}
+                {(recommendations?.comparison.length ?? 0) > 0 && (
+                  <>
+                    <div style={{ fontWeight: 600, fontSize: 14, marginTop: 20, marginBottom: 8, color: '#64748b' }}>
+                      COMPARISON
+                    </div>
+                    <ComparisonTable products={recommendations!.products} rows={recommendations!.comparison} currency={currency} />
+                  </>
+                )}
               </>
+            ) : (
+              <div style={{
+                height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: '#94a3b8', fontSize: 14, textAlign: 'center',
+              }}>
+                No products matched your request.
+                <br />
+                Try a higher budget, fewer keywords, or a broader category.
+              </div>
             )}
           </>
         ) : (

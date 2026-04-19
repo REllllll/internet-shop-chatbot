@@ -1,4 +1,6 @@
 import os
+import importlib
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -23,8 +25,8 @@ def test_internal_products_filter_by_category(client):
 
 
 def test_internal_products_filter_by_max_price(client):
-    response = client.get("/internal/products?max_price=400")
-    assert all(p["discounted_price"] <= 400.0 for p in response.json())
+    response = client.get("/internal/products?max_price=3")
+    assert all(p["discounted_price"] <= 249.0 for p in response.json())
 
 
 def test_internal_products_filter_by_keywords(client):
@@ -38,3 +40,36 @@ def test_internal_products_filter_by_multiple_keywords(client):
     response = client.get("/internal/products?keywords=cable,lightning")
     data = response.json()
     assert any(p["product_id"] == "B001" for p in data)
+
+
+def test_cors_allows_loopback_frontend_origin(client):
+    response = client.options(
+        "/chat",
+        headers={
+            "Origin": "http://127.0.0.1:3000",
+            "Access-Control-Request-Method": "POST",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.headers["access-control-allow-origin"] == "http://127.0.0.1:3000"
+
+
+def test_cors_uses_configured_origins(monkeypatch, test_db):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    monkeypatch.setenv("CORS_ALLOW_ORIGINS", "http://example.com")
+
+    import app.main
+
+    module = importlib.reload(app.main)
+    client = TestClient(module.app)
+    response = client.options(
+        "/chat",
+        headers={
+            "Origin": "http://example.com",
+            "Access-Control-Request-Method": "POST",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.headers["access-control-allow-origin"] == "http://example.com"

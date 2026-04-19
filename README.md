@@ -42,6 +42,12 @@ cd ..
 python3 data/seed.py
 ```
 
+## Environment
+
+- `ANTHROPIC_API_KEY` is required by the backend.
+- `CORS_ALLOW_ORIGINS` is optional and accepts a comma-separated list of frontend origins.
+  If unset, the backend allows `http://localhost:3000` and `http://127.0.0.1:3000` for local development.
+
 ## Run with Docker Compose
 
 Start the full stack:
