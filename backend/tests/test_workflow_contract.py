@@ -18,6 +18,9 @@ def test_workflow_builds_key_feature_comparison_rows():
     build_comparison = next(node for node in workflow["nodes"] if node["name"] == "Build Comparison")
     code = build_comparison["parameters"]["jsCode"]
 
+    assert "Price (₹)" in code
+    assert "Rating" in code
+    assert "Discount" in code
     assert "Key Features" in code
     # Comparison rows should not include reviews.
     assert "Reviews" not in code
