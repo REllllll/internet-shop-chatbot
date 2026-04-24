@@ -55,9 +55,11 @@
       },
       {
         "from": "vendor/n8n",
-        "to": "n8n"
+        "to": "n8n",
+        "filter": ["**/*"]
       }
     ],
+    "afterPack": "scripts/after-pack.cjs",
     "mac": {
       "category": "public.app-category.education",
       "target": [
