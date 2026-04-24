@@ -65,4 +65,31 @@ describe('useChat', () => {
     await act(async () => { await result.current.sendMessage('try something else') })
     expect(result.current.recommendations).toBeNull()
   })
+
+  it('uses Electron runtime API base URL when available', async () => {
+    const desktopApi = {
+      getRuntimeConfig: vi.fn().mockResolvedValue({
+        apiBaseUrl: 'http://127.0.0.1:8000',
+        workflowUrl: 'http://127.0.0.1:5678',
+      }),
+    }
+    Object.defineProperty(window, 'shopbotDesktop', {
+      value: desktopApi,
+      configurable: true,
+    })
+
+    global.fetch = vi.fn().mockResolvedValue(
+      mockSSE([`data: ${JSON.stringify({ type: 'done' })}\n\n`])
+    )
+
+    const { result } = renderHook(() => useChat())
+    await act(async () => { await result.current.sendMessage('hello') })
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      'http://127.0.0.1:8000/chat',
+      expect.objectContaining({ method: 'POST' })
+    )
+
+    delete (window as Record<string, unknown>).shopbotDesktop
+  })
 })

@@ -1,7 +1,13 @@
 import { useState, useCallback } from 'react'
 import type { Message, RecommendationResult } from '../types'
 
-const API_BASE = import.meta.env.VITE_API_URL ?? ''
+async function resolveApiBaseUrl(): Promise<string> {
+  if (window.shopbotDesktop) {
+    const config = await window.shopbotDesktop.getRuntimeConfig()
+    return config.apiBaseUrl
+  }
+  return import.meta.env.VITE_API_URL ?? ''
+}
 
 export function useChat() {
   const [messages, setMessages] = useState<Message[]>([
@@ -23,13 +29,17 @@ export function useChat() {
     let retries = 0
     const attempt = async (): Promise<void> => {
       try {
-        const res = await fetch(`${API_BASE}/chat`, {
+        const apiBaseUrl = await resolveApiBaseUrl()
+        const res = await fetch(`${apiBaseUrl}/chat`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
           body: JSON.stringify({ message: text }),
         })
-        const reader = res.body!.getReader()
+        if (!res.ok || !res.body) {
+          throw new Error(`Chat request failed with HTTP ${res.status}`)
+        }
+        const reader = res.body.getReader()
         const decoder = new TextDecoder()
         let buf = ''
         for (;;) {
