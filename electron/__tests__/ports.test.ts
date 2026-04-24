@@ -12,7 +12,16 @@ afterEach(async () => {
 
 describe('port checks', () => {
   it('reports an unused loopback port as available', async () => {
-    expect(await isPortAvailable(0)).toBe(true)
+    server = net.createServer()
+    await new Promise<void>((resolve) => server!.listen(0, '127.0.0.1', resolve))
+    const address = server.address()
+    if (!address || typeof address === 'string') throw new Error('expected tcp address')
+    const port = address.port
+
+    await new Promise<void>((resolve) => server!.close(() => resolve()))
+    server = undefined
+
+    expect(await isPortAvailable(port)).toBe(true)
   })
 
   it('throws a clear error when a fixed port is occupied', async () => {
