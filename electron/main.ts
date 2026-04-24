@@ -9,6 +9,7 @@ import { ServiceManager } from './serviceManager.js'
 import { ensureDefaultWorkflow, restoreDefaultWorkflow } from './workflow.js'
 
 let mainWindow: BrowserWindow | null = null
+let workflowWindow: BrowserWindow | null = null
 let serviceManager: ServiceManager | null = null
 
 function currentStatus(): DesktopStatus {
@@ -80,9 +81,39 @@ function handleStartupError(error: unknown): void {
   app.quit()
 }
 
+async function openWorkflowWindow(): Promise<void> {
+  const status = currentStatus()
+  if (status.n8n.state !== 'ready') {
+    throw new Error(status.n8n.message ?? 'n8n is not ready.')
+  }
+
+  if (workflowWindow && !workflowWindow.isDestroyed()) {
+    workflowWindow.focus()
+    return
+  }
+
+  workflowWindow = new BrowserWindow({
+    width: 1200,
+    height: 820,
+    minWidth: 900,
+    minHeight: 650,
+    title: 'ShopBot Workflow',
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+    },
+  })
+  workflowWindow.on('closed', () => {
+    workflowWindow = null
+  })
+  await workflowWindow.loadURL(status.n8n.url)
+}
+
 ipcMain.handle('shopbot:getRuntimeConfig', () => runtimeConfig())
 ipcMain.handle('shopbot:getStatus', () => currentStatus())
-ipcMain.handle('shopbot:openWorkflow', async () => undefined)
+ipcMain.handle('shopbot:openWorkflow', async () => {
+  await openWorkflowWindow()
+})
 ipcMain.handle('shopbot:restoreDefaultWorkflow', async () => {
   const paths = getDesktopPaths(app)
   const status = currentStatus()
@@ -108,6 +139,9 @@ app.on('window-all-closed', () => {
 })
 
 app.on('before-quit', () => {
+  if (workflowWindow && !workflowWindow.isDestroyed()) {
+    workflowWindow.close()
+  }
   void serviceManager?.stop()
 })
 
