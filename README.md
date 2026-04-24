@@ -80,6 +80,35 @@ cd frontend
 npm test
 ```
 
+## Desktop Bundle
+
+The desktop bundle packages the React UI, FastAPI backend, SQLite product database, and local n8n workflow runtime into a macOS Electron app.
+
+Build prerequisites for developers:
+
+- Node.js 20+
+- Python 3.12+
+- A backend virtual environment at `backend/.venv`
+- A macOS Node runtime copied to `vendor/node`
+
+Build commands:
+
+```bash
+npm install
+npm --prefix frontend install
+backend/.venv/bin/python -m pip install -r backend/requirements.txt
+bash scripts/prepare-n8n-runtime.sh
+npm run desktop:dist
+```
+
+Create the academic archive:
+
+```bash
+SUBMISSION_NAME=surname_forename npm run submission:package
+```
+
+The included executable uses local ports `127.0.0.1:8000` for FastAPI and `127.0.0.1:5678` for n8n. If either port is already in use, ShopBot displays a startup error.
+
 ## Notes
 
 - The recommendation flow is designed around a static dataset. Real-time inventory and user authentication are intentionally out of scope.
