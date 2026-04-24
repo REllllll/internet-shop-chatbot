@@ -8,10 +8,11 @@
   "scripts": {
     "electron:build": "tsc -p electron/tsconfig.json",
     "electron:test": "vitest run --config electron/vitest.config.ts",
+    "data:seed": "test -f data/products.db || python3 data/seed.py",
     "frontend:build": "npm --prefix frontend run build",
     "backend:package": "python3 -m PyInstaller backend/shopbot_backend.spec --clean --noconfirm",
-    "desktop:build": "npm run frontend:build && npm run backend:package && npm run electron:build && electron-builder --mac --dir",
-    "desktop:dist": "npm run frontend:build && npm run backend:package && npm run electron:build && electron-builder --mac",
+    "desktop:build": "npm run data:seed && npm run frontend:build && npm run backend:package && npm run electron:build && electron-builder --mac --dir",
+    "desktop:dist": "npm run data:seed && npm run frontend:build && npm run backend:package && npm run electron:build && electron-builder --mac",
     "submission:package": "bash scripts/package-submission.sh"
   },
   "devDependencies": {
@@ -29,12 +30,21 @@
     },
     "files": [
       "dist-electron/**/*",
-      "frontend/dist/**/*",
-      "workflows/recommendation-pipeline.json",
-      "data/products.db",
       "build-resources/readme-template.txt"
     ],
     "extraResources": [
+      {
+        "from": "frontend/dist",
+        "to": "frontend/dist"
+      },
+      {
+        "from": "workflows/recommendation-pipeline.json",
+        "to": "workflows/recommendation-pipeline.json"
+      },
+      {
+        "from": "data/products.db",
+        "to": "data/products.db"
+      },
       {
         "from": "dist/shopbot-backend",
         "to": "backend"

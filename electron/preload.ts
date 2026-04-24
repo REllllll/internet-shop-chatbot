@@ -8,6 +8,10 @@ const api: ShopBotDesktopApi = {
   restoreDefaultWorkflow: () => ipcRenderer.invoke('shopbot:restoreDefaultWorkflow') as Promise<{ ok: boolean; message: string }>,
   retryServices: () => ipcRenderer.invoke('shopbot:retryServices') as Promise<DesktopStatus>,
   onStatusChange: (callback) => {
+    if (typeof callback !== 'function') {
+      throw new TypeError('shopbotDesktop.onStatusChange requires a callback function')
+    }
+
     const listener = (_event: Electron.IpcRendererEvent, status: DesktopStatus) => callback(status)
     ipcRenderer.on('shopbot:statusChanged', listener)
     return () => ipcRenderer.removeListener('shopbot:statusChanged', listener)

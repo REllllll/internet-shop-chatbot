@@ -15,11 +15,15 @@ export interface DesktopPaths {
   rendererIndexPath: string
 }
 
-export function resolveResourcePath(app: Pick<App, 'isPackaged' | 'getAppPath'>, relativePath: string): string {
+export function resolveAppSourcePath(app: Pick<App, 'getAppPath'>, relativePath: string): string {
+  return path.join(app.getAppPath(), relativePath)
+}
+
+export function resolveRuntimeResourcePath(app: Pick<App, 'isPackaged' | 'getAppPath'>, relativePath: string): string {
   if (app.isPackaged) {
     return path.join(process.resourcesPath, relativePath)
   }
-  return path.join(app.getAppPath(), relativePath)
+  return resolveAppSourcePath(app, relativePath)
 }
 
 export function getDesktopPaths(app: Pick<App, 'isPackaged' | 'getAppPath' | 'getPath'>): DesktopPaths {
@@ -29,15 +33,15 @@ export function getDesktopPaths(app: Pick<App, 'isPackaged' | 'getAppPath' | 'ge
 
   return {
     appDataDir,
-    seedDatabasePath: resolveResourcePath(app, 'data/products.db'),
+    seedDatabasePath: resolveRuntimeResourcePath(app, 'data/products.db'),
     writableDatabasePath: path.join(appDataDir, 'products.db'),
-    workflowPath: resolveResourcePath(app, 'workflows/recommendation-pipeline.json'),
-    backendExecutablePath: resolveResourcePath(app, path.join('backend', backendName)),
-    nodeExecutablePath: resolveResourcePath(app, path.join('node', 'bin', nodeName)),
-    n8nEntryPath: resolveResourcePath(app, path.join('n8n', 'node_modules', 'n8n', 'bin', 'n8n')),
+    workflowPath: resolveRuntimeResourcePath(app, 'workflows/recommendation-pipeline.json'),
+    backendExecutablePath: resolveRuntimeResourcePath(app, path.join('backend', backendName)),
+    nodeExecutablePath: resolveRuntimeResourcePath(app, path.join('node', 'bin', nodeName)),
+    n8nEntryPath: resolveRuntimeResourcePath(app, path.join('n8n', 'node_modules', 'n8n', 'bin', 'n8n')),
     n8nDataDir: path.join(appDataDir, 'n8n'),
     envFilePath: path.join(appDataDir, '.env'),
-    rendererIndexPath: resolveResourcePath(app, path.join('frontend', 'dist', 'index.html')),
+    rendererIndexPath: resolveRuntimeResourcePath(app, path.join('frontend', 'dist', 'index.html')),
   }
 }
 
