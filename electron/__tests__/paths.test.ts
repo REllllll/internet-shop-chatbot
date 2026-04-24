@@ -1,5 +1,5 @@
 import path from 'node:path'
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { afterEach, describe, expect, it } from 'vitest'
 import { ensureFirstRunData, getDesktopPaths } from '../paths.js'
@@ -72,6 +72,28 @@ describe('getDesktopPaths', () => {
 })
 
 describe('ensureFirstRunData', () => {
+  it('copies seed database to writable app data only when missing', () => {
+    const root = makeTempDir()
+    const appData = makeTempDir()
+    const dataDir = path.join(root, 'data')
+    rmSync(dataDir, { recursive: true, force: true })
+    writeFileSync(path.join(root, 'scratch-file'), 'x')
+    rmSync(path.join(root, 'scratch-file'))
+    mkdirSync(dataDir, { recursive: true })
+    writeFileSync(path.join(dataDir, 'products.db'), 'seed')
+
+    const paths = getDesktopPaths(makeApp({ isPackaged: false, appPath: root, appDataDir: appData }))
+    ensureFirstRunData(paths)
+
+    expect(readFileSync(paths.writableDatabasePath, 'utf8')).toBe('seed')
+
+    writeFileSync(paths.writableDatabasePath, 'user copy')
+    ensureFirstRunData(paths)
+
+    expect(readFileSync(paths.writableDatabasePath, 'utf8')).toBe('user copy')
+    expect(existsSync(paths.n8nDataDir)).toBe(true)
+  })
+
   it('copies the seed database only when the writable database is missing', () => {
     const appDataDir = makeTempDir()
     const seedDatabasePath = path.join(makeTempDir(), 'products.db')
