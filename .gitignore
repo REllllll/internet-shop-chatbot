@@ -5,6 +5,7 @@ __pycache__/
 data/products.db
 frontend/node_modules/
 frontend/dist/
+node_modules/
 n8n_data/
 .DS_Store
 ._*
@@ -12,8 +13,10 @@ n8n_data/
 .superpowers/
 .worktree/
 .worktrees/
+build/
 dist/
 dist-electron/
 release/
+submission/
 vendor/node/
 vendor/n8n/
