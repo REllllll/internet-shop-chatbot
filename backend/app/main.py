@@ -40,8 +40,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from .health import router as health_router      # noqa: E402
 from .internal import router as internal_router  # noqa: E402
 from .chat import router as chat_router          # noqa: E402
 
+app.include_router(health_router)
 app.include_router(internal_router)
 app.include_router(chat_router)
