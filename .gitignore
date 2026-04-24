@@ -12,3 +12,8 @@ n8n_data/
 .superpowers/
 .worktree/
 .worktrees/
+dist/
+dist-electron/
+release/
+vendor/node/
+vendor/n8n/
