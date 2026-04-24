@@ -1,0 +1,62 @@
+{
+  "name": "shopbot-desktop",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local desktop bundle for ShopBot",
+  "main": "dist-electron/main.js",
+  "type": "module",
+  "scripts": {
+    "electron:build": "tsc -p electron/tsconfig.json",
+    "electron:test": "vitest run --config electron/vitest.config.ts",
+    "frontend:build": "npm --prefix frontend run build",
+    "backend:package": "python3 -m PyInstaller backend/shopbot_backend.spec --clean --noconfirm",
+    "desktop:build": "npm run frontend:build && npm run backend:package && npm run electron:build && electron-builder --mac --dir",
+    "desktop:dist": "npm run frontend:build && npm run backend:package && npm run electron:build && electron-builder --mac",
+    "submission:package": "bash scripts/package-submission.sh"
+  },
+  "devDependencies": {
+    "@types/node": "^24.12.0",
+    "electron": "^39.2.7",
+    "electron-builder": "^26.0.12",
+    "typescript": "~5.9.3",
+    "vitest": "^4.1.2"
+  },
+  "build": {
+    "appId": "edu.shopbot.local",
+    "productName": "ShopBot",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist-electron/**/*",
+      "frontend/dist/**/*",
+      "workflows/recommendation-pipeline.json",
+      "data/products.db",
+      "build-resources/readme-template.txt"
+    ],
+    "extraResources": [
+      {
+        "from": "dist/shopbot-backend",
+        "to": "backend"
+      },
+      {
+        "from": "vendor/node",
+        "to": "node"
+      },
+      {
+        "from": "vendor/n8n",
+        "to": "n8n"
+      }
+    ],
+    "mac": {
+      "category": "public.app-category.education",
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "hardenedRuntime": false,
+      "entitlements": "build-resources/entitlements.mac.plist",
+      "entitlementsInherit": "build-resources/entitlements.mac.plist"
+    }
+  }
+}
