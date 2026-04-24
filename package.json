@@ -10,7 +10,7 @@
     "electron:test": "vitest run --config electron/vitest.config.ts",
     "data:seed": "test -f data/products.db || python3 data/seed.py",
     "frontend:build": "npm --prefix frontend run build",
-    "backend:package": "python3 -m PyInstaller backend/shopbot_backend.spec --clean --noconfirm",
+    "backend:package": "backend/.venv/bin/python -m PyInstaller backend/shopbot_backend.spec --clean --noconfirm",
     "desktop:build": "npm run data:seed && npm run frontend:build && npm run backend:package && npm run electron:build && electron-builder --mac --dir",
     "desktop:dist": "npm run data:seed && npm run frontend:build && npm run backend:package && npm run electron:build && electron-builder --mac",
     "submission:package": "bash scripts/package-submission.sh"
