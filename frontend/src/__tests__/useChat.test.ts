@@ -90,6 +90,6 @@ describe('useChat', () => {
       expect.objectContaining({ method: 'POST' })
     )
 
-    delete (window as Record<string, unknown>).shopbotDesktop
+    delete (window as unknown as Record<string, unknown>).shopbotDesktop
   })
 })
