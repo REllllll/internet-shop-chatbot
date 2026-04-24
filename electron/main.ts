@@ -1,10 +1,12 @@
 import { app, BrowserWindow, dialog, ipcMain } from 'electron'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
+import { readFileSync } from 'node:fs'
 import type { DesktopStatus, RuntimeConfig } from './types.js'
 import { ensureFirstRunData, getDesktopPaths } from './paths.js'
 import { assertPortAvailable } from './ports.js'
 import { ServiceManager } from './serviceManager.js'
+import { ensureDefaultWorkflow, restoreDefaultWorkflow } from './workflow.js'
 
 let mainWindow: BrowserWindow | null = null
 let serviceManager: ServiceManager | null = null
@@ -40,8 +42,12 @@ async function startServices(): Promise<DesktopStatus> {
   ensureFirstRunData(paths)
   serviceManager = new ServiceManager(paths)
   const status = await serviceManager.start()
+  if (status.n8n.state === 'ready') {
+    const workflowJson = readFileSync(paths.workflowPath, 'utf8')
+    await ensureDefaultWorkflow(status.n8n.url, workflowJson)
+  }
   broadcastStatus()
-  return status
+  return serviceManager.getStatus()
 }
 
 async function createWindow(): Promise<void> {
@@ -77,7 +83,22 @@ function handleStartupError(error: unknown): void {
 ipcMain.handle('shopbot:getRuntimeConfig', () => runtimeConfig())
 ipcMain.handle('shopbot:getStatus', () => currentStatus())
 ipcMain.handle('shopbot:openWorkflow', async () => undefined)
-ipcMain.handle('shopbot:restoreDefaultWorkflow', async () => ({ ok: false, message: 'Workflow restore is wired in Task 5.' }))
+ipcMain.handle('shopbot:restoreDefaultWorkflow', async () => {
+  const paths = getDesktopPaths(app)
+  const status = currentStatus()
+  if (status.n8n.state !== 'ready') {
+    return { ok: false, message: 'n8n is not ready.' }
+  }
+  try {
+    const workflowJson = readFileSync(paths.workflowPath, 'utf8')
+    return await restoreDefaultWorkflow(status.n8n.url, workflowJson)
+  } catch (error) {
+    return {
+      ok: false,
+      message: error instanceof Error ? error.message : String(error),
+    }
+  }
+})
 ipcMain.handle('shopbot:retryServices', async () => startServices())
 
 app.whenReady().then(createWindow).catch(handleStartupError)
